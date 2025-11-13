@@ -2,11 +2,62 @@
 
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Mic } from "lucide-react";
-import { useState } from "react";
+import { Send, Mic, Loader } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
 export default function Home() {
   const [input, setInput] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  // Initialize Web Speech API
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition =
+        window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = "en-US";
+
+        recognitionRef.current.onstart = () => {
+          setIsListening(true);
+        };
+
+        recognitionRef.current.onresult = (event: any) => {
+          let interimTranscript = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              setInput((prev) => prev + transcript);
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error("Speech recognition error:", event.error);
+          setIsListening(false);
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsListening(false);
+        };
+      }
+    }
+  }, []);
+
+  const handleMicClick = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current?.start();
+      setIsListening(true);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,9 +86,17 @@ export default function Home() {
           />
           <button
             type="button"
-            className="absolute left-3 top-3 text-white/70 hover:text-white transition-colors"
+            onClick={handleMicClick}
+            className={`absolute left-3 top-3 transition-colors ${isListening
+              ? "text-red-500 animate-pulse"
+              : "text-white/70 hover:text-white"
+              }`}
           >
-            <Mic className="h-5 w-5" />
+            {isListening ? (
+              <Loader className="h-5 w-5 animate-spin" />
+            ) : (
+              <Mic className="h-5 w-5" />
+            )}
           </button>
           <button
             type="submit"
