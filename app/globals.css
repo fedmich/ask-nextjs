@@ -126,4 +126,20 @@
   body {
     @apply bg-background text-foreground;
   }
-}   
+  ol {
+    list-style-type: decimal;
+    list-style-position: inside;
+    padding-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  ul {
+    list-style-type: disc;
+    list-style-position: inside;
+    padding-left: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

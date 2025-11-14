@@ -2,7 +2,7 @@
 
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Mic, Loader } from "lucide-react";
+import { Send, Mic, Loader, Copy, Check } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -26,6 +26,7 @@ export default function Home() {
   const [displayedAnswer, setDisplayedAnswer] = useState("");
   const [isAnswerLoading, setIsAnswerLoading] = useState(false);
   const [currentQuery, setCurrentQuery] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Initialize Web Speech API
   useEffect(() => {
@@ -176,8 +177,30 @@ export default function Home() {
     setInput((prev) => prev.trim());
   };
 
+  const handleCopyAnswer = async (text: string, id: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for non-secure contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start p-4 md:p-8">
+    <div className="app ask-ai min-h-screen flex flex-col items-center justify-start p-4 md:p-8">
       {/* Header */}
       <h1 className="text-4xl md:text-6xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
         Ask A.I.
@@ -225,9 +248,20 @@ export default function Home() {
         )}
 
         {displayedAnswer && currentQuery && (
-          <div className="mt-4 rounded-lg bg-white/10 p-8 max-w-full text-lg leading-relaxed">
+          <div className="mt-4 rounded-lg bg-white/10 p-8 max-w-full text-lg leading-relaxed relative">
+            <button
+              onClick={() => handleCopyAnswer(displayedAnswer, "current")}
+              className="absolute top-3 right-3 text-white/50 hover:text-white transition-colors"
+              title="Copy to clipboard"
+            >
+              {copiedId === "current" ? (
+                <Check className="h-5 w-5 text-green-400" />
+              ) : (
+                <Copy className="h-5 w-5" />
+              )}
+            </button>
             <div className="mb-3">
-              <p className="text-sm text-gray-300 font-semibold mb-1">{currentQuery}</p>
+              <p className="text-base md:text-lg text-blue-300 font-semibold mb-1">{currentQuery}</p>
               <p className="text-xs text-gray-500">{new Date().toLocaleTimeString()}</p>
             </div>
             <div className="prose prose-invert max-w-full text-gray-100">
@@ -240,9 +274,20 @@ export default function Home() {
       {/* History of previous answers */}
       <div className="w-full max-w-4xl mt-8 space-y-6">
         {history.map((item, idx) => (
-          <div key={idx} className="rounded-lg bg-white/10 p-8 max-w-full text-lg leading-relaxed">
+          <div key={idx} className="rounded-lg bg-white/10 p-8 max-w-full text-lg leading-relaxed relative">
+            <button
+              onClick={() => handleCopyAnswer(item.displayedAnswer, `history-${idx}`)}
+              className="absolute top-3 right-3 text-white/50 hover:text-white transition-colors"
+              title="Copy to clipboard"
+            >
+              {copiedId === `history-${idx}` ? (
+                <Check className="h-5 w-5 text-green-400" />
+              ) : (
+                <Copy className="h-5 w-5" />
+              )}
+            </button>
             <div className="mb-3">
-              <p className="text-sm text-gray-300 font-semibold mb-1">{item.query}</p>
+              <p className="ask-ai-query text-base md:text-lg text-blue-300 font-semibold mb-1">{item.query}</p>
               <p className="text-xs text-gray-500">
                 {new Date(item.timestamp).toLocaleTimeString()}
               </p>
