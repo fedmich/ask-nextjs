@@ -216,7 +216,7 @@ export default function Home() {
       </form>
 
       {/* Current answer being typed out */}
-      <div className="w-full max-w-2xl mt-6">
+      <div className="w-full max-w-4xl mt-6">
         {isAnswerLoading && (
           <div className="flex items-center gap-2 text-sm text-gray-400">
             <Loader className="h-4 w-4 animate-spin" />
@@ -225,12 +225,12 @@ export default function Home() {
         )}
 
         {displayedAnswer && currentQuery && (
-          <div className="mt-4 rounded-lg bg-white/5 p-6">
+          <div className="mt-4 rounded-lg bg-white/10 p-8 max-w-full text-lg leading-relaxed">
             <div className="mb-3">
               <p className="text-sm text-gray-300 font-semibold mb-1">{currentQuery}</p>
               <p className="text-xs text-gray-500">{new Date().toLocaleTimeString()}</p>
             </div>
-            <div className="prose prose-invert max-w-full">
+            <div className="prose prose-invert max-w-full text-gray-100">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayedAnswer}</ReactMarkdown>
             </div>
           </div>
@@ -238,16 +238,16 @@ export default function Home() {
       </div>
 
       {/* History of previous answers */}
-      <div className="w-full max-w-2xl mt-8 space-y-6">
+      <div className="w-full max-w-4xl mt-8 space-y-6">
         {history.map((item, idx) => (
-          <div key={idx} className="rounded-lg bg-white/5 p-6">
+          <div key={idx} className="rounded-lg bg-white/10 p-8 max-w-full text-lg leading-relaxed">
             <div className="mb-3">
               <p className="text-sm text-gray-300 font-semibold mb-1">{item.query}</p>
               <p className="text-xs text-gray-500">
                 {new Date(item.timestamp).toLocaleTimeString()}
               </p>
             </div>
-            <div className="prose prose-invert max-w-full">
+            <div className="prose prose-invert max-w-full text-gray-100">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.displayedAnswer}</ReactMarkdown>
             </div>
           </div>
