@@ -12,6 +12,7 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef<string>("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   interface HistoryItem {
     query: string;
@@ -139,10 +140,40 @@ export default function Home() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim()) {
+      textareaRef.current?.focus();
+      return;
+    }
     const q = input.trim();
     setInput("");
     sendQuery(q);
+    textareaRef.current?.focus();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Ctrl+Enter to submit
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      if (!input.trim()) {
+        textareaRef.current?.focus();
+        return;
+      }
+      const q = input.trim();
+      setInput("");
+      sendQuery(q);
+      textareaRef.current?.focus();
+    }
+    // ESC to clear
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setInput("");
+      textareaRef.current?.focus();
+    }
+  };
+
+  const handleBlur = () => {
+    // Trim text on blur
+    setInput((prev) => prev.trim());
   };
 
   return (
@@ -156,9 +187,12 @@ export default function Home() {
       <form onSubmit={handleSubmit} className="w-full max-w-2xl space-y-4">
         <div className="relative">
           <Textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask anything..."
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            placeholder="Ask anything... (Ctrl+Enter to submit, ESC to clear)"
             className="min-h-24 pl-12 pr-20 rounded-xl bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60"
             autoFocus
           />
