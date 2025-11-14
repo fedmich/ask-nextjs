@@ -13,9 +13,18 @@ export default function Home() {
   const recognitionRef = useRef<any>(null);
   const finalTranscriptRef = useRef<string>("");
 
-  const [answer, setAnswer] = useState("");
+  interface HistoryItem {
+    query: string;
+    answer: string;
+    timestamp: number;
+    displayedAnswer: string;
+  }
+
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [currentAnswer, setCurrentAnswer] = useState("");
   const [displayedAnswer, setDisplayedAnswer] = useState("");
   const [isAnswerLoading, setIsAnswerLoading] = useState(false);
+  const [currentQuery, setCurrentQuery] = useState("");
 
   // Initialize Web Speech API
   useEffect(() => {
@@ -77,8 +86,9 @@ export default function Home() {
   async function sendQuery(q: string) {
     if (!q || !q.trim()) return;
     setIsAnswerLoading(true);
-    setAnswer("");
+    setCurrentAnswer("");
     setDisplayedAnswer("");
+    setCurrentQuery(q);
     try {
       const res = await fetch("https://st24.fedmich.com/api/ask-ai/", {
         method: "POST",
@@ -87,10 +97,10 @@ export default function Home() {
       });
       const data = await res.json();
       const ans = data?.answer ?? data?.answer_text ?? JSON.stringify(data);
-      setAnswer(ans);
+      setCurrentAnswer(ans);
     } catch (err) {
       console.error(err);
-      setAnswer("Error: Failed to fetch answer from API.");
+      setCurrentAnswer("Error: Failed to fetch answer from API.");
     } finally {
       setIsAnswerLoading(false);
     }
@@ -98,21 +108,34 @@ export default function Home() {
 
   // Typewriter effect for answer
   useEffect(() => {
-    if (!answer) return;
+    if (!currentAnswer) return;
     setDisplayedAnswer("");
     const chunkSize = 40; // characters per chunk
     const intervalMs = 25; // fast animation
     let index = 0;
     const timer = setInterval(() => {
-      const next = answer.slice(index, index + chunkSize);
+      const next = currentAnswer.slice(index, index + chunkSize);
       setDisplayedAnswer((prev) => prev + next);
       index += chunkSize;
-      if (index >= answer.length) {
+      if (index >= currentAnswer.length) {
         clearInterval(timer);
+        // Once typewriter finishes, prepend to history
+        setHistory((prev) => [
+          {
+            query: currentQuery,
+            answer: currentAnswer,
+            timestamp: Date.now(),
+            displayedAnswer: currentAnswer,
+          },
+          ...prev,
+        ]);
+        setCurrentAnswer("");
+        setDisplayedAnswer("");
+        setCurrentQuery("");
       }
     }, intervalMs);
     return () => clearInterval(timer);
-  }, [answer]);
+  }, [currentAnswer, currentQuery]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,7 +181,7 @@ export default function Home() {
         </div>
       </form>
 
-      {/* Answer area */}
+      {/* Current answer being typed out */}
       <div className="w-full max-w-2xl mt-6">
         {isAnswerLoading && (
           <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -167,11 +190,34 @@ export default function Home() {
           </div>
         )}
 
-        {displayedAnswer && (
-          <div className="mt-4 rounded-lg bg-white/5 p-6 prose prose-invert max-w-full">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayedAnswer}</ReactMarkdown>
+        {displayedAnswer && currentQuery && (
+          <div className="mt-4 rounded-lg bg-white/5 p-6">
+            <div className="mb-3">
+              <p className="text-sm text-gray-300 font-semibold mb-1">{currentQuery}</p>
+              <p className="text-xs text-gray-500">{new Date().toLocaleTimeString()}</p>
+            </div>
+            <div className="prose prose-invert max-w-full">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayedAnswer}</ReactMarkdown>
+            </div>
           </div>
         )}
+      </div>
+
+      {/* History of previous answers */}
+      <div className="w-full max-w-2xl mt-8 space-y-6">
+        {history.map((item, idx) => (
+          <div key={idx} className="rounded-lg bg-white/5 p-6">
+            <div className="mb-3">
+              <p className="text-sm text-gray-300 font-semibold mb-1">{item.query}</p>
+              <p className="text-xs text-gray-500">
+                {new Date(item.timestamp).toLocaleTimeString()}
+              </p>
+            </div>
+            <div className="prose prose-invert max-w-full">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.displayedAnswer}</ReactMarkdown>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
