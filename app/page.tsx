@@ -75,6 +75,48 @@ export default function Home() {
     }
   }, []);
 
+  // Handle query parameter on page load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const queryParam = params.get("q");
+        // Trim and validate query parameter
+        const trimmedQuery = queryParam ? String(queryParam).trim() : null;
+        if (trimmedQuery && trimmedQuery.length > 0) {
+          typeQueryAndSubmit(trimmedQuery);
+        }
+      }
+    }, 300); // 0.3 second delay
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Function to handle query with typing animation
+  function typeQueryAndSubmit(query: string) {
+    // Sanitize input: trim and validate
+    const sanitizedQuery = String(query).trim();
+    if (!sanitizedQuery) return;
+
+    const charDelay = 30; // milliseconds between each character
+    let currentIndex = 0;
+    let displayedText = "";
+
+    // Typing animation
+    const typingInterval = setInterval(() => {
+      if (currentIndex < sanitizedQuery.length) {
+        displayedText += sanitizedQuery[currentIndex];
+        setInput(displayedText);
+        currentIndex++;
+      } else {
+        clearInterval(typingInterval);
+        // After typing is done, wait 0.5s and submit
+        setTimeout(() => {
+          sendQuery(sanitizedQuery);
+        }, 500);
+      }
+    }, charDelay);
+  }
+
   const handleMicClick = () => {
     if (isListening) {
       recognitionRef.current?.stop();
