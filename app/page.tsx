@@ -19,6 +19,7 @@ export default function Home() {
     answer: string;
     timestamp: number;
     displayedAnswer: string;
+    id: string;
   }
 
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -27,6 +28,7 @@ export default function Home() {
   const [isAnswerLoading, setIsAnswerLoading] = useState(false);
   const [currentQuery, setCurrentQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   // Initialize Web Speech API
   useEffect(() => {
@@ -127,6 +129,8 @@ export default function Home() {
     }
   };
 
+  
+
   async function sendQuery(q: string) {
     if (!q || !q.trim()) return;
     setIsAnswerLoading(true);
@@ -140,8 +144,12 @@ export default function Home() {
         body: JSON.stringify({ q, domain: typeof window !== "undefined" ? window.location.hostname : "server" }),
       });
       const data = await res.json();
-      const ans = data?.answer ?? data?.answer_text ?? JSON.stringify(data);
-      setCurrentAnswer(ans);
+      if (data?.status === "not_found") {
+        setCurrentAnswer("No results available for that query.");
+      } else {
+        const ans = data?.answer ?? data?.answer_text ?? JSON.stringify(data);
+        setCurrentAnswer(ans);
+      }
     } catch (err) {
       console.error(err);
       setCurrentAnswer("Error: Failed to fetch answer from API.");
@@ -164,15 +172,23 @@ export default function Home() {
       if (index >= currentAnswer.length) {
         clearInterval(timer);
         // Once typewriter finishes, prepend to history
+        const newId = `history-${Date.now()}`;
         setHistory((prev) => [
           {
             query: currentQuery,
             answer: currentAnswer,
             timestamp: Date.now(),
             displayedAnswer: currentAnswer,
+            id: newId,
           },
           ...prev,
         ]);
+        // Make newly added item expanded by default so first-3 behaviour is consistent
+        setExpandedItems((prev) => {
+          const s = new Set(prev);
+          s.add(newId);
+          return s;
+        });
         setCurrentAnswer("");
         setDisplayedAnswer("");
         setCurrentQuery("");
@@ -241,6 +257,87 @@ export default function Home() {
     }
   };
 
+  const [collapsingItems, setCollapsingItems] = useState<Set<string>>(new Set());
+
+  const toggleAccordion = (itemId: string) => {
+    // Toggle: if currently expanded -> collapse (with animation), else expand
+    if (expandedItems.has(itemId)) {
+      // collapsing
+      setCollapsingItems((prev) => {
+        const s = new Set(prev);
+        s.add(itemId);
+        return s;
+      });
+      // remove from expanded after animation
+      setTimeout(() => {
+        setExpandedItems((prev) => {
+          const s = new Set(prev);
+          s.delete(itemId);
+          return s;
+        });
+        setCollapsingItems((prev) => {
+          const s = new Set(prev);
+          s.delete(itemId);
+          return s;
+        });
+      }, 200);
+    } else {
+      // expanding
+      setExpandedItems((prev) => {
+        const s = new Set(prev);
+        s.add(itemId);
+        return s;
+      });
+    }
+  };
+
+  
+
+  // legacy: kept for reference but not used (we use highlightChildren instead)
+  const highlightMatches = (text: string, query: string): string => {
+    if (!query.trim()) return text;
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")})`, "gi");
+    return text.replace(regex, "<strong>$1</strong>");
+  };
+
+  // Helper to highlight matches inside React children produced by ReactMarkdown
+  const highlightChildren = (children: any, query: string): any => {
+
+    if (!query || !String(query).trim()) return children;
+    const q = String(query).trim();
+    // Don't highlight long or multi-word queries
+    if (q.length > 30 || /\s/.test(q)) return children;
+    const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")})`, "gi");
+
+    const process = (child: any): any => {
+        if (typeof child === "string") {
+        const parts = child.split(regex);
+        return parts.map((part, i) => {
+          if (part && regex.test(part)) {
+            // Render a styled span instead of raw <strong>
+            return React.createElement(
+              "span",
+              { key: i, className: "query-highlight" },
+              part
+            );
+          }
+          return part;
+        });
+      }
+      if (React.isValidElement(child)) {
+        const element = child as React.ReactElement<any>;
+        const childChildren = element.props ? element.props.children : undefined;
+        return React.cloneElement(element, { ...element.props, key: Math.random() }, highlightChildren(childChildren, query));
+      }
+      return child;
+    };
+
+    if (Array.isArray(children)) {
+      return children.map((c, i) => React.createElement(React.Fragment, { key: i }, process(c)));
+    }
+    return process(children);
+  };
+
   return (
     <div className="app ask-ai min-h-screen flex flex-col items-center justify-start p-4 md:p-8">
       {/* Header */}
@@ -307,38 +404,117 @@ export default function Home() {
               <p className="text-xs text-gray-500">{new Date().toLocaleTimeString()}</p>
             </div>
             <div className="prose prose-invert max-w-full text-gray-100">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{displayedAnswer}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  p: ({ node, ...props }) => <p {...props}>{highlightChildren(props.children, currentQuery)}</p>,
+                  li: ({ node, ...props }) => <li {...props}>{highlightChildren(props.children, currentQuery)}</li>,
+                }}
+              >
+                {displayedAnswer}
+              </ReactMarkdown>
             </div>
           </div>
         )}
       </div>
 
       {/* History of previous answers */}
-      <div className="w-full max-w-4xl mt-8 space-y-6">
-        {history.map((item, idx) => (
-          <div key={idx} className="rounded-lg bg-white/10 p-8 max-w-full text-lg leading-relaxed relative">
-            <button
-              onClick={() => handleCopyAnswer(item.displayedAnswer, `history-${idx}`)}
-              className="absolute top-3 right-3 text-white/50 hover:text-white transition-colors"
-              title="Copy to clipboard"
-            >
-              {copiedId === `history-${idx}` ? (
-                <Check className="h-5 w-5 text-green-400" />
+      <div className="w-full max-w-4xl mt-8 space-y-3">
+        {history.map((item, idx) => {
+          const isExpanded = expandedItems.has(item.id);
+          const isCollapsing = collapsingItems.has(item.id);
+          // Show header (collapsed view) when the item is not expanded.
+          // Removed special-case for 4th+ items so any item can be collapsed by the user.
+          const shouldShowHeader = !isExpanded;
+          const fullDateTime = new Date(item.timestamp).toLocaleString();
+
+          return (
+            <div key={item.id}>
+              {shouldShowHeader ? (
+                // Collapsed header for 4th+ items
+                <>
+                  <button
+                    onClick={() => toggleAccordion(item.id)}
+                    className={`w-full text-left rounded-lg bg-gradient-to-r from-white/15 to-white/10 hover:from-white/20 hover:to-white/15 transition-all p-4 flex items-center justify-between border border-white/10 hover:border-white/20 ${
+                      isCollapsing ? "accordion-collapse" : ""
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <p className="ask-ai-query text-sm md:text-base text-blue-300 font-semibold">
+                        {item.query}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: "#d9dde3" }} title={fullDateTime}>
+                        {new Date(item.timestamp).toLocaleTimeString()}
+                      </p>
+                    </div>
+                    <div className="w-8 flex items-center justify-center text-white/70">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m6-6H6" />
+                      </svg>
+                    </div>
+                  </button>
+                </>
               ) : (
-                <Copy className="h-5 w-5" />
+                // Full card for first 3 or expanded items
+                <div className={`rounded-lg bg-white/10 border border-white/10 max-w-full text-lg leading-relaxed ${
+                  isCollapsing ? "accordion-collapse" : ""
+                }`}>
+                  {/* Header with close button */}
+                  <div className="bg-gradient-to-r from-white/15 to-white/10 p-4 flex items-start justify-between border-b border-white/10 rounded-t-lg">
+                    <button onClick={() => toggleAccordion(item.id)} className="flex-1 text-left text-left">
+                      <p className="ask-ai-query text-sm md:text-base text-blue-300 font-semibold">
+                        {item.query}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: "#d9dde3" }} title={fullDateTime}>
+                        {new Date(item.timestamp).toLocaleTimeString()}
+                      </p>
+                    </button>
+                    <div className="w-8 flex items-center justify-center">
+                      <button
+                        onClick={() => toggleAccordion(item.id)}
+                        className="text-white/70 hover:text-white transition-colors"
+                        title="Collapse"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Content body */}
+                  <div className="p-8 relative">
+                    <button
+                      onClick={() => handleCopyAnswer(item.displayedAnswer, item.id)}
+                      className="absolute top-8 right-8 text-white/50 hover:text-white transition-colors"
+                      title="Copy to clipboard"
+                    >
+                      {copiedId === item.id ? (
+                        <Check className="h-5 w-5 text-green-400" />
+                      ) : (
+                        <Copy className="h-5 w-5" />
+                      )}
+                    </button>
+                    <div className="prose prose-invert max-w-full text-gray-100">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          p: ({ node, ...props }) => <p {...props}>{highlightChildren(props.children, item.query)}</p>,
+                          li: ({ node, ...props }) => <li {...props}>{highlightChildren(props.children, item.query)}</li>,
+                        }}
+                      >
+                        {item.displayedAnswer}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
               )}
-            </button>
-            <div className="mb-3">
-              <p className="ask-ai-query text-base md:text-lg text-blue-300 font-semibold mb-1">{item.query}</p>
-              <p className="text-xs text-gray-500">
-                {new Date(item.timestamp).toLocaleTimeString()}
-              </p>
+
+              {/* Expanded content for collapsed headers */}
+              
             </div>
-            <div className="prose prose-invert max-w-full text-gray-100">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{item.displayedAnswer}</ReactMarkdown>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
