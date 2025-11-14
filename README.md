@@ -1,36 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ask A.I.
 
-## Getting Started
+![Ask A.I. Logo](public/Ask-AI.png)
 
-First, run the development server:
+Ask A.I. is a lightweight Next.js app that lets you ask questions by typing or using speech-to-text and receives Markdown-formatted answers from a backend AI API. Answers are typed out with a fast typewriter effect and rendered as Markdown.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Type or speak your question (Web Speech API)
+- Submit by pressing `Ctrl+Enter` (or `Cmd+Enter` on macOS) or the Send button
+- Speech recognition final results are appended to the textarea and automatically submitted when recognition ends
+- Answers are received as Markdown and rendered using `react-markdown` + `remark-gfm`
+- Fast typewriter playback of answers; conversation history is kept (newest first)
+- Keyboard shortcuts: `Ctrl+Enter` submit, `Esc` clear the textarea; blank submits will refocus the textarea
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Made with ❤️ — ask a question and enjoy the answers.
