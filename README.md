@@ -14,3 +14,8 @@ Ask A.I. is a lightweight Next.js app that lets you ask questions by typing or u
 - Keyboard shortcuts: `Ctrl+Enter` submit, `Esc` clear the textarea; blank submits will refocus the textarea
 
 Made with ❤️ — ask a question and enjoy the answers.
+
+---
+<a href="https://www.buymeacoffee.com/fedmich" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174">
+</a>   
