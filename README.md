@@ -2,6 +2,9 @@
 
 ![Ask A.I. Logo](public/Ask-AI.png)
 
+Use the app here
+[https://ask.fedmich.com](https://ask.fedmich.com)
+
 Ask A.I. is a lightweight Next.js app that lets you ask questions by typing or using speech-to-text and receives Markdown-formatted answers from a backend AI API. Answers are typed out with a fast typewriter effect and rendered as Markdown.
 
 ## Features
