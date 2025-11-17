@@ -202,3 +202,146 @@
   background-color: rgba(255,255,255,0.04);
   color: #fff7d6;
 }
+
+/* Markdown content styling */
+.prose h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  color: #bfdbfe;
+  border-bottom: 2px solid rgba(147, 197, 253, 0.3);
+  padding-bottom: 0.5rem;
+}
+
+.prose h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #93c5fd;
+}
+
+.prose h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #93c5fd;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.prose table thead {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.prose table th {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #bfdbfe;
+  background-color: rgba(147, 197, 253, 0.1);
+}
+
+.prose table td {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1rem;
+  color: #f3f4f6;
+}
+
+.prose table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 8px rgba(147, 197, 253, 0.3);
+  border-left: 2px solid #93c5fd;
+  transition: all 0.3s ease;
+}
+
+.prose table tbody tr:hover td {
+  background-color: white;
+  color: #000000;
+}
+
+.prose table tbody tr td:hover {
+  background-color: #60a5fa;
+  color: black;
+  font-weight: bold;
+}
+
+.prose table tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.prose code {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: #fed7aa;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-family: monospace;
+}
+
+.prose pre {
+  background-color: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background-color: transparent;
+  color: white;
+  padding: 0;
+}
+
+.prose blockquote {
+  border-left: 4px solid #60a5fa;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #d1d5db;
+  margin: 1rem 0;
+}
+
+.prose hr {
+  border-color: rgba(255, 255, 255, 0.1);
+  margin: 1.5rem 0;
+}
+
+.prose strong {
+  font-weight: 700;
+  color: white;
+}
+
+.prose em {
+  font-style: italic;
+  color: #e5e7eb;
+}
+
+.prose a {
+  color: #60a5fa;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.prose a:hover {
+  color: #93c5fd;
+}
+
+.prose ul {
+  list-style-type: disc;
+  list-style-position: inside;
+}
+
+.prose ol {
+  list-style-type: decimal;
+  list-style-position: inside;
+}
