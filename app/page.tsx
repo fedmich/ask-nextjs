@@ -15,12 +15,23 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const URL_API = "https://rack.fedmich.com/api/ask-ai/";
+  const URL_ENDPOINT_RECOMMEND_HOME = "https://rack.fedmich.com/api/ask-recommend/"; // Update with actual endpoint
+
   interface HistoryItem {
     query: string;
     answer: string;
     timestamp: number;
     displayedAnswer: string;
     id: string;
+  }
+
+  interface Recommendation {
+    id: string;
+    title: string;
+    description?: string;
+    thumbnail?: string | null;
+    category?: string;
+    keywords?: string[];
   }
 
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -30,6 +41,8 @@ export default function Home() {
   const [currentQuery, setCurrentQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
 
   // Initialize Web Speech API
   useEffect(() => {
@@ -76,6 +89,31 @@ export default function Home() {
         };
       }
     }
+  }, []);
+
+  // Load recommendations after 2 seconds on initial load
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      setIsLoadingRecommendations(true);
+      try {
+        const res = await fetch(URL_ENDPOINT_RECOMMEND_HOME, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        if (data?.status === "success" && data?.data?.recommendations) {
+          setRecommendations(data.data.recommendations);
+        } else if (Array.isArray(data)) {
+          // Handle if API returns array directly
+          setRecommendations(data);
+        }
+      } catch (err) {
+        console.error("Failed to load recommendations:", err);
+      } finally {
+        setIsLoadingRecommendations(false);
+      }
+    }, 2000); // 2 seconds delay
+    return () => clearTimeout(timer);
   }, []);
 
   // Handle query parameter on page load
@@ -140,7 +178,14 @@ export default function Home() {
     }
   };
 
-  
+  const handleRecommendationClick = (title: string) => {
+    setRecommendations([]); // Hide recommendations
+    setInput(title);
+    // Auto-submit the query
+    setTimeout(() => {
+      sendQuery(title);
+    }, 100);
+  };
 
   async function sendQuery(q: string) {
     if (!q || !q.trim()) return;
@@ -388,6 +433,50 @@ export default function Home() {
           </button>
         </div>
       </form>
+
+      {/* Recommendations Grid - shows only when input is empty */}
+      {!input.trim() && recommendations.length > 0 && (
+        <div className="w-full max-w-2xl mt-6">
+          <p className="text-sm text-gray-400 mb-3">Suggested queries:</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {recommendations.map((rec) => (
+              <button
+                key={rec.id}
+                onClick={() => handleRecommendationClick(rec.title)}
+                className="group relative overflow-hidden rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 transition-all p-4 text-left"
+              >
+                {/* Thumbnail if available */}
+                {rec.thumbnail && (
+                  <div className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity">
+                    <img
+                      src={rec.thumbnail}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                
+                {/* Content */}
+                <div className="relative z-10">
+                  <h3 className="font-semibold text-white text-sm mb-1 line-clamp-2">
+                    {rec.title}
+                  </h3>
+                  {rec.description && (
+                    <p className="text-xs text-gray-300 line-clamp-1">
+                      {rec.description}
+                    </p>
+                  )}
+                  {rec.category && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      {rec.category}
+                    </p>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Current answer being typed out */}
       <div className="w-full max-w-4xl mt-6">
