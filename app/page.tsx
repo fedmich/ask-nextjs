@@ -2,7 +2,7 @@
 
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send, Mic, Loader, Copy, Check } from "lucide-react";
+import { Send, Mic, Loader, Copy, Check, Menu, X } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -43,6 +43,8 @@ export default function Home() {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false); // Track if user has searched
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   // Initialize Web Speech API
   useEffect(() => {
@@ -179,7 +181,7 @@ export default function Home() {
   };
 
   const handleRecommendationClick = (title: string) => {
-    setRecommendations([]); // Hide recommendations
+    setHasSearched(true);
     setInput(title);
     // Auto-submit the query
     setTimeout(() => {
@@ -187,8 +189,26 @@ export default function Home() {
     }, 100);
   };
 
+  const goBackHome = () => {
+    setInput("");
+    setCurrentAnswer("");
+    setDisplayedAnswer("");
+    setCurrentQuery("");
+    setHasSearched(false);
+  };
+
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(!isUserMenuOpen);
+  };
+
+  const handleUserMenuClick = (action: string) => {
+    console.log("User action:", action);
+    setIsUserMenuOpen(false);
+  };
+
   async function sendQuery(q: string) {
     if (!q || !q.trim()) return;
+    setHasSearched(true);
     setIsAnswerLoading(true);
     setCurrentAnswer("");
     setDisplayedAnswer("");
@@ -396,9 +416,96 @@ export default function Home() {
   };
 
   return (
-    <div className="app ask-ai min-h-screen flex flex-col items-center justify-start p-4 md:p-8">
-      {/* Header */}
-      <h1 className="text-4xl md:text-6xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
+    <div className="app ask-ai min-h-screen flex flex-col">
+      {/* Fixed Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-br from-purple-900/95 via-blue-900/95 to-indigo-900/95 backdrop-blur-sm border-b border-white/10">
+        <div className="flex items-center justify-between px-4 md:px-8 py-3">
+          {/* Logo - Small Rectangle on tablet/desktop */}
+          <button
+            onClick={goBackHome}
+            className="flex items-center gap-2 group"
+          >
+            <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-blue-400 to-purple-500 group-hover:from-blue-300 group-hover:to-purple-400 transition-all">
+              <span className="text-white font-bold text-lg">AF</span>
+            </div>
+            {/* Logo text - visible on all screens */}
+            <span className="text-sm sm:text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300 group-hover:from-blue-300 group-hover:to-blue-200 transition-all">
+              Ask Fed
+            </span>
+          </button>
+
+          {/* Breadcrumbs - center, hidden on mobile */}
+          <div className="hidden md:flex flex-1 ml-8 items-center gap-2 text-sm text-gray-400">
+            {hasSearched && (
+              <>
+                <button
+                  onClick={goBackHome}
+                  className="text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Home
+                </button>
+                <span>/</span>
+                <span className="text-gray-300 line-clamp-1">{currentQuery || "Search"}</span>
+              </>
+            )}
+          </div>
+
+          {/* User Menu */}
+          <div className="relative">
+            <button
+              onClick={toggleUserMenu}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              title="User menu"
+            >
+              <Menu className="h-5 w-5 text-white" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isUserMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 border border-white/10 rounded-lg shadow-lg overflow-hidden">
+                <button
+                  onClick={() => handleUserMenuClick("profile")}
+                  className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors text-sm border-b border-white/5"
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={() => handleUserMenuClick("settings")}
+                  className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors text-sm border-b border-white/5"
+                >
+                  Settings
+                </button>
+                <button
+                  onClick={() => handleUserMenuClick("logout")}
+                  className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors text-sm"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Breadcrumbs - shown below header on mobile when searched */}
+        {hasSearched && (
+          <div className="md:hidden px-4 py-2 flex items-center gap-2 text-xs text-gray-400 border-t border-white/5">
+            <button
+              onClick={goBackHome}
+              className="text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              Home
+            </button>
+            <span>/</span>
+            <span className="text-gray-300 line-clamp-1">{currentQuery || "Search"}</span>
+          </div>
+        )}
+      </header>
+
+      {/* Main Content - shifted down to account for fixed header */}
+      <main className="flex-1 flex flex-col items-center justify-start pt-24 md:pt-20 px-4 md:px-8 pb-8">
+
+      {/* Center Logo */}
+      <h1 className="text-4xl md:text-6xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300 hover:from-blue-300 hover:to-blue-200 transition-all cursor-pointer" onClick={goBackHome}>
         Ask Fed
       </h1>
 
@@ -434,16 +541,20 @@ export default function Home() {
         </div>
       </form>
 
-      {/* Recommendations Grid - shows only when input is empty */}
-      {!input.trim() && recommendations.length > 0 && (
+      {/* Recommendations Grid - shows only when input is empty and not searched */}
+      {!input.trim() && !hasSearched && recommendations.length > 0 && (
         <div className="w-full max-w-2xl mt-6">
           <p className="text-sm text-gray-400 mb-3">Suggested queries:</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {recommendations.map((rec) => (
-              <button
+              <a
                 key={rec.id}
-                onClick={() => handleRecommendationClick(rec.title)}
-                className="group relative overflow-hidden rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 transition-all p-4 text-left"
+                href={`?q=${encodeURIComponent(rec.title)}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleRecommendationClick(rec.title);
+                }}
+                className="group relative overflow-hidden rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 transition-all p-4 text-left block cursor-pointer"
               >
                 {/* Thumbnail if available */}
                 {rec.thumbnail && (
@@ -458,7 +569,7 @@ export default function Home() {
                 
                 {/* Content */}
                 <div className="relative z-10">
-                  <h3 className="font-semibold text-white text-sm mb-1 line-clamp-2">
+                  <h3 className="font-semibold text-white text-sm mb-1 line-clamp-2 group-hover:text-blue-200 transition-colors">
                     {rec.title}
                   </h3>
                   {rec.description && (
@@ -472,7 +583,7 @@ export default function Home() {
                     </p>
                   )}
                 </div>
-              </button>
+              </a>
             ))}
           </div>
         </div>
@@ -617,6 +728,7 @@ export default function Home() {
           );
         })}
       </div>
+      </main>
     </div>
   );
 }
