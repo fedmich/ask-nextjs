@@ -87,6 +87,16 @@ export default function Home() {
         // Trim and validate query parameter
         const trimmedQuery = queryParam ? String(queryParam).trim() : null;
         if (trimmedQuery && trimmedQuery.length > 0) {
+          // Build a version of the query that uses plus signs for spaces
+          const plusEncoded = encodeURIComponent(trimmedQuery).replace(/%20/g, "+");
+          // Preserve other params while replacing q with the plus-encoded value
+          params.delete("q");
+          const other = params.toString();
+          const newSearch = other ? `?${other}&q=${plusEncoded}` : `?q=${plusEncoded}`;
+          if (window.location.search !== newSearch) {
+            const newUrl = `${window.location.pathname}${newSearch}${window.location.hash || ""}`;
+            window.history.replaceState(null, "", newUrl);
+          }
           typeQueryAndSubmit(trimmedQuery);
         }
       }
