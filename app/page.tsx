@@ -150,6 +150,7 @@ export default function Home() {
       } else {
         const ans = data?.answer ?? data?.answer_text ?? JSON.stringify(data);
         setCurrentAnswer(ans);
+        document.title = `${q.substring(0, 50)} - Ask Fed`;
       }
     } catch (err) {
       console.error(err);
@@ -343,7 +344,7 @@ export default function Home() {
     <div className="app ask-ai min-h-screen flex flex-col items-center justify-start p-4 md:p-8">
       {/* Header */}
       <h1 className="text-4xl md:text-6xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
-        Ask A.I.
+        Ask Fed
       </h1>
 
       {/* Chat Area */}
