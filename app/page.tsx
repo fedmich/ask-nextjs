@@ -14,6 +14,7 @@ export default function Home() {
   const finalTranscriptRef = useRef<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const URL_API = "https://rack.fedmich.com/api/ask-ai/";
   interface HistoryItem {
     query: string;
     answer: string;
@@ -138,7 +139,7 @@ export default function Home() {
     setDisplayedAnswer("");
     setCurrentQuery(q);
     try {
-      const res = await fetch("https://st24.fedmich.com/api/ask-ai/", {
+      const res = await fetch(URL_API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ q, domain: typeof window !== "undefined" ? window.location.hostname : "server" }),
